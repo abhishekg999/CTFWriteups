@@ -68,5 +68,5 @@ os.system('wslview out.png')
 
 
 ---
-## **Flag**: `LITCTF{wow_i_actually_love_the_fetch}`
+## **Flag**: LITCTF{wow_i_actually_love_the_fetch}
 ---
