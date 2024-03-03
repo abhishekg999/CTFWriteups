@@ -1,5 +1,8 @@
 # CTF Writeups
 
+EDIT: The content on this page is being moved to [blog.ahh.bet](https://blog.ahh.bet)
+
+
 Assortment of the some interesting CTF Challenges I have solved in the past few years. 
 
 Highlights: 
